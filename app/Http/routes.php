@@ -12,3 +12,7 @@
 */
 
 Route::get('/', 'PagesController@index');
+
+Route::get('/backend/logfiles', 'BackendController@logfiles');
+
+Route::get('/backend/logfile/{filename}/{extension}/{start?}/{stop?}', 'BackendController@logfile');

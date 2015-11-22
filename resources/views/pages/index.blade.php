@@ -7,4 +7,11 @@
         <p>We are creating something beautiful today.</p>
     </div>
 
+    <div class="dropdown">
+        <button id="logfiles-button" class="btn btn-primary dropdown-toggle" disabled="disabled" type="button" data-toggle="dropdown">Select logfile for parsing <span class="caret"></span></button>
+        <ul id="logfiles" class="dropdown-menu">
+        </ul>
+    </div>
+
+    <script src="js/otgw.js"></script>
 @stop
