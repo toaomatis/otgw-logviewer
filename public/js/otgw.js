@@ -1,32 +1,13 @@
 google.load('visualization', '1.1', {packages: ['corechart', 'line']});
 
 function draw_chart(ot_data) {
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'Time');
-    $.each(ot_data['ot_ids'], function (key, value) {
-        data.addColumn('number', value);
-    });
+    /* https://developers.google.com/chart/interactive/docs/reference#dataparam */
+    var data = new google.visualization.DataTable(ot_data);
 
-    $.each(ot_data['ot_data'], function (timestamp, values) {
-        var row = [timestamp];
-        $.each(values, function (id, value) {
-            row.push(value);
-        });
-        data.addRow(row);
-    });
     var options = {
-        title: "OTGW Log",
-        hAxis: {
-            title: 'Time'
-        },
-        vAxis: {
-            title: 'Temperature'
-        },
-        colors: ['#a52714', '#097138'],
-        crosshair: {
-            color: '#000',
-            trigger: 'selection'
-        },
+        title: 'OTGW Log',
+        width: 1100,
+        height: 700,
         interpolateNulls: true
     };
 

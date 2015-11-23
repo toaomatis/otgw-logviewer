@@ -71,8 +71,14 @@ class BackendController extends Controller
         $handle = fopen($path, "r");
         $stepsize = ($stop - $start) / BackendController::MAX_LINES;
         $lines = array();
-        $lines['ot_ids'] = BackendController::$OT_IDS;
-        $lines['ot_data'] = array();
+        /* Prepare cols data array */
+        $cols = array();
+        $cols[] = array('id' => '', 'label' => 'Timestamp', 'type' => 'string');
+        foreach (BackendController::$OT_IDS as $id => $label) {
+            $cols[] = array('id' => $id, 'label' => $label, 'type' => 'number');
+        }
+        /* Prepare lines data array */
+        $lines = array();
         while (!feof($handle)) {
             $line = fgets($handle);
             if ($line[0] === ' ') {
@@ -113,22 +119,32 @@ class BackendController extends Controller
                                 break;
                         }
                         $array_idx = sprintf('%02d:%02d:00', $units[0], $units[1]);
-                        if(array_key_exists($array_idx, $lines['ot_data']) === false)
-                        {
-                            foreach(BackendController::$OT_IDS as $id_key => $id_value)
-                            {
-                                $lines['ot_data'][$array_idx][$id_key] = null;
+                        if (array_key_exists($array_idx, $lines) === false) {
+                            foreach (BackendController::$OT_IDS as $id_key => $id_value) {
+                                $lines[$array_idx][$id_key] = null;
                             }
                         }
-                        $lines['ot_data'][$array_idx][$ot_id] = $message;
+                        $lines[$array_idx][$ot_id] = $message;
                     }
                 }
             }
             $linecount++;
         }
         fclose($handle);
-
-        return response()->json($lines);
+        /* Prepare rows data array */
+        $rows = array();
+        foreach ($lines as $key => $values) {
+            $row = array();
+            $row[] = array('v' => $key);
+            foreach ($values as $ot_id => $ot_value) {
+                $row[] = array('v' => $ot_value);
+            }
+            $rows[]['c'] = $row;
+        }
+        $chart = array();
+        $chart['cols'] = $cols;
+        $chart['rows'] = $rows;
+        return response()->json($chart);
     }
 
     private function stringToTimestamp($string)
