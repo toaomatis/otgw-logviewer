@@ -6,7 +6,6 @@ use App\Http\Requests;
 
 class BackendController extends Controller
 {
-    const LOG_DIR = 'C:\Users\Mathijs\Desktop\otdata\\';
     const MAX_LINES = 100;
 
     public static $OT_IDS = [
@@ -46,7 +45,8 @@ class BackendController extends Controller
     public
     function logfiles()
     {
-        $all_files = scandir(BackendController::LOG_DIR);
+        $log_dir = $_ENV['LOG_DIR'];
+        $all_files = scandir($log_dir);
         $files = array();
         foreach ($all_files as $file)
         {
@@ -61,7 +61,8 @@ class BackendController extends Controller
     public
     function logfile($filename, $extension, $start = 0, $stop = 86400)
     {
-        $logfile = BackendController::LOG_DIR . $filename . '.' . $extension;
+        $log_dir = $_ENV['LOG_DIR'];
+        $logfile = $log_dir . $filename . '.' . $extension;
         $path = realpath($logfile);
         if ($path === false)
         {
