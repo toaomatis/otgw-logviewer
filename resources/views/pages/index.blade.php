@@ -13,5 +13,7 @@
         </ul>
     </div>
 
+    <div id="chart_div"></div>
+
     <script src="js/otgw.js"></script>
 @stop
