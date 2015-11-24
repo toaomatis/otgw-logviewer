@@ -9,7 +9,7 @@ class BackendController extends Controller
     const MAX_LINES = 100;
 
     public static $OT_IDS = [
-        //0 => "flame_status",
+        0 => "flame_status",
         1 => "control_setpoint",
         //9 => "remote_override_setpoint",
         16 => "room_setpoint",
@@ -23,6 +23,16 @@ class BackendController extends Controller
         //120 => "burner_operation_hours",
         //121 => "ch_pump_operation_hours",
         //123 => "dhw_burner_operation_hours",
+    ];
+
+    public static $OT_FLAME_IDS = [
+        0 => 'ch_enable',
+        1 => 'dhw_enable',
+        2 => 'cooling_enable',
+        3 => 'otc_active',
+        4 => 'ch2_enable',
+        5 => 'summer_winter',
+        6 => 'dwh_blocking',
     ];
 
     public static $OT_IDS_TYPE = [
@@ -73,10 +83,17 @@ class BackendController extends Controller
         $lines = array();
         /* Prepare cols data array */
         $cols = array();
-        $cols[] = array('id' => '', 'label' => 'Timestamp', 'type' => 'string');
-        foreach (BackendController::$OT_IDS as $id => $label) {
-            $cols[] = array('id' => $id, 'label' => $label, 'type' => 'number');
+        $cols[] = array('id' => 0, 'label' => 'Timestamp', 'type' => 'string');
+        foreach (BackendController::$OT_IDS as $ot_id => $ot_label) {
+            if ($ot_id === 0) {
+                foreach (BackendController::$OT_FLAME_IDS as $flame_id => $flame_label) {
+                    $cols[] = array('id' => 1024 + $flame_id, 'label' => $flame_label, 'type' => 'number');
+                }
+                continue;
+            }
+            $cols[] = array('id' => $ot_id, 'label' => $ot_label, 'type' => 'number');
         }
+
         /* Prepare lines data array */
         $lines = array();
         while (!feof($handle)) {
@@ -104,27 +121,42 @@ class BackendController extends Controller
                 if (($ot_type === '1') || ($ot_type === '4') || ($ot_type === 'C') || ($ot_type === '9')) {
                     if (array_key_exists($ot_id, BackendController::$OT_IDS) === true) {
                         $topic = BackendController::$OT_IDS[$ot_id];
+                        $array_idx = sprintf('%02d:%02d:00', $units[0], $units[1]);
+                        if (array_key_exists($array_idx, $lines) === false) {
+                            foreach (BackendController::$OT_IDS as $id_key => $id_value) {
+                                if ($id_key === 0) {
+                                    foreach (BackendController::$OT_FLAME_IDS as $flame_id => $flame_label) {
+                                        $lines[$array_idx][1024 + $flame_id] = 0;
+                                    }
+                                    continue;
+                                }
+                                $lines[$array_idx][$id_key] = null;
+                            }
+                        }
                         switch (BackendController::$OT_IDS_TYPE[$ot_id]) {
                             case 'flag8': {
                                 $message = sprintf('%016b', $ot_payload);
+                                foreach (BackendController::$OT_FLAME_IDS as $flame_id => $flame_label) {
+                                    $value = (int)($ot_payload & (1 >> $flame_id));
+                                    $lines[$array_idx][1024 + $flame_id] = $value;
+                                }
                             }
                                 break;
                             case 'f8.8': {
                                 $message = round((float)$ot_payload / 256.0, 2);
+                                $lines[$array_idx][$ot_id] = $message;
                             }
                                 break;
                             case 'u16': {
                                 $message = $ot_payload;
+                                $lines[$array_idx][$ot_id] = $message;
+                            }
+                                break;
+                            default: {
+                                abort(500);
                             }
                                 break;
                         }
-                        $array_idx = sprintf('%02d:%02d:00', $units[0], $units[1]);
-                        if (array_key_exists($array_idx, $lines) === false) {
-                            foreach (BackendController::$OT_IDS as $id_key => $id_value) {
-                                $lines[$array_idx][$id_key] = null;
-                            }
-                        }
-                        $lines[$array_idx][$ot_id] = $message;
                     }
                 }
             }
