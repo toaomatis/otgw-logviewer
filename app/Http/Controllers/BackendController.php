@@ -32,7 +32,7 @@ class BackendController extends Controller
         3 => 'otc_active',
         4 => 'ch2_enable',
         5 => 'summer_winter',
-        6 => 'dwh_blocking',
+        6 => 'dhw_blocking',
     ];
 
     public static $OT_IDS_TYPE = [
