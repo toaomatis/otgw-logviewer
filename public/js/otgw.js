@@ -1,4 +1,4 @@
-google.load('visualization', '1.1', {packages: ['corechart', 'line']});
+google.load('visualization', '1', {packages: ['corechart']});
 
 function draw_chart(ot_data) {
     /* https://developers.google.com/chart/interactive/docs/reference#dataparam */
