@@ -15,5 +15,5 @@
 
     <div id="chart_div"></div>
 
-    <script src="js/otgw.js"></script>
+    {!! Html::script('js/otgw.js') !!}
 @stop

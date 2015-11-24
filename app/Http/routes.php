@@ -11,7 +11,13 @@
 |
 */
 
-Route::get('/', 'PagesController@index');
+Route::get('/', 'PagesController@index')->name('home');
+
+Route::get('logfiles', 'LogfilesController@index')->name('logfiles');
+Route::get('logfiles/create', 'LogfilesController@create')->name('logfiles.create');
+Route::get('logfiles/{id}', 'LogfilesController@show');
+
+Route::post('logfiles', 'LogfilesController@store');
 
 Route::get('/backend/logfiles', 'BackendController@logfiles');
 
