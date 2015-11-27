@@ -14,8 +14,10 @@ class CreateLogsTable extends Migration
     {
         Schema::create('logs', function (Blueprint $table) {
             $table->increments('id');
+            $table->timestamp('logged_at');
             $table->integer('msg_id');
             $table->integer('value');
+            $table->string('filename')->nullable();
             $table->timestamps();
 
             $table->foreign('msg_id')->references('id')->on('messages');

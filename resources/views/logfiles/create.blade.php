@@ -8,13 +8,17 @@
         <hr/>
         {!! Form::open(['route' => 'logfiles']) !!}
         <div class="form-group">
-            {!! Form::label('file', 'otdata logfile:') !!}
-            {!! Form::file('file', null, ['class' => 'form-control']) !!}
+            {!! Form::label('log_file', 'OpenTherm log file:') !!}
+            {!! Form::file('log_file', null, ['class' => 'form-control']) !!}
+        </div>
+        <div class="form-group">
+            {!! Form::label('log_date', 'OpenTherm Log date:') !!}
+            {!! Form::text('log_date', null, ['class' => 'form-control', 'placeholder' => 'YYYY-MM-DD']) !!}
         </div>
         <div class="form-group">
             {!! Form::submit('Upload', ['class' => 'btn btn-primary form-control']) !!}
         </div>
         {!! Form::close() !!}
     </div>
-
+    {!! Html::script('js/logfiles_create.js') !!}
 @stop
