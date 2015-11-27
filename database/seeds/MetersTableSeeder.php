@@ -19,6 +19,14 @@ class MessagesTableSeeder extends Seeder
         120 => "burner_operation_hours",
         121 => "ch_pump_operation_hours",
         123 => "dhw_burner_operation_hours",
+
+        256 => 'ch_enable',
+        257 => 'dhw_enable',
+        258 => 'cooling_enable',
+        259 => 'otc_active',
+        260 => 'ch2_enable',
+        261 => 'summer_winter',
+        262 => 'dhw_blocking',
     ];
 
     /**
@@ -29,9 +37,9 @@ class MessagesTableSeeder extends Seeder
     public function run()
     {
         foreach (MessagesTableSeeder::$OT_IDS as $ot_id => $ot_label) {
-            DB::table('messages')->insert([
+            DB::table('meters')->insert([
                 'id' => $ot_id,
-                'label' => $ot_label,
+                'name' => $ot_label,
             ]);
         }
     }
