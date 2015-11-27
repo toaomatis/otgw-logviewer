@@ -26,13 +26,14 @@ class BackendController extends Controller
     ];
 
     public static $OT_FLAME_IDS = [
-        0 => 'ch_enable',
-        1 => 'dhw_enable',
-        2 => 'cooling_enable',
-        3 => 'otc_active',
-        4 => 'ch2_enable',
-        5 => 'summer_winter',
-        6 => 'dhw_blocking',
+        0 => 'fault_indicator',
+        1 => 'ch_active',
+        2 => 'dhw_active',
+        3 => 'flame_status',
+        4 => 'cooling_active',
+        5 => 'ch2_active',
+        6 => 'diagnostic_indicator',
+        7 => 'electricity_production',
     ];
 
     public static $OT_IDS_TYPE = [

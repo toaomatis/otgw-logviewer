@@ -5,7 +5,7 @@ use Illuminate\Database\Seeder;
 class MetersTableSeeder extends Seeder
 {
     public static $OT_IDS = [
-        0 => "flame_status",
+        //0 => "flame_status",
         1 => "control_setpoint",
         9 => "remote_override_setpoint",
         16 => "room_setpoint",
@@ -20,13 +20,14 @@ class MetersTableSeeder extends Seeder
         121 => "ch_pump_operation_hours",
         123 => "dhw_burner_operation_hours",
 
-        256 => 'ch_enable',
-        257 => 'dhw_enable',
-        258 => 'cooling_enable',
-        259 => 'otc_active',
-        260 => 'ch2_enable',
-        261 => 'summer_winter',
-        262 => 'dhw_blocking',
+        256 => 'fault_indicator',
+        257 => 'ch_active',
+        258 => 'dhw_active',
+        259 => 'flame_status',
+        260 => 'cooling_active',
+        261 => 'ch2_active',
+        262 => 'diagnostic_indicator',
+        263 => 'electricity_production',
     ];
 
     /**
