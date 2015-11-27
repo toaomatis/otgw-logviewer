@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 
-class MessagesTableSeeder extends Seeder
+class MetersTableSeeder extends Seeder
 {
     public static $OT_IDS = [
         0 => "flame_status",
@@ -36,7 +36,7 @@ class MessagesTableSeeder extends Seeder
      */
     public function run()
     {
-        foreach (MessagesTableSeeder::$OT_IDS as $ot_id => $ot_label) {
+        foreach (MetersTableSeeder::$OT_IDS as $ot_id => $ot_label) {
             DB::table('meters')->insert([
                 'id' => $ot_id,
                 'name' => $ot_label,
