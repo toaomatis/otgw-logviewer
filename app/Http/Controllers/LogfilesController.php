@@ -27,8 +27,18 @@ class LogfilesController extends Controller
             'seed' => true,
             'type' => 'f8.8'
         ],
+        14 => [
+            'label' => 'maximum_relative_modulation_level',
+            'seed' => true,
+            'type' => 'f8.8'
+        ],
         16 => [
             'label' => 'room_setpoint',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        17 => [
+            'label' => 'relative_modulation_level',
             'seed' => true,
             'type' => 'f8.8',
         ],
@@ -52,7 +62,7 @@ class LogfilesController extends Controller
             'seed' => true,
             'type' => 'f8.8',
         ],
-        116 => [
+        /*116 => [
             'label' => 'burner_starts',
             'seed' => true,
             'type' => 'u16',
@@ -81,7 +91,7 @@ class LogfilesController extends Controller
             'label' => 'dhw_burner_operation_hours',
             'seed' => true,
             'type' => 'u16',
-        ],
+        ],*/
         256 => [
             'label' => 'fault_indicator',
             'seed' => true,
@@ -253,6 +263,18 @@ class LogfilesController extends Controller
             }
         }
         fclose($handle);
+        foreach($this->last_logged as $meter_id => $last_logged)
+        {
+            /* Log last known not logged value */
+            if ($this->last_logged[$meter_id]['datetime'] !== null)
+            {
+                $metric_last = new Metric();
+                $metric_last->meter_id = $meter_id;
+                $metric_last->value = $this->last_logged[$meter_id]['value'];
+                $metric_last->datetime = $this->last_logged[$meter_id]['datetime'];
+                $metric_last->save();
+            }
+        }
         return redirect()->route('logfiles.create');
     }
 
@@ -317,9 +339,17 @@ class LogfilesController extends Controller
             $metric->meter_id = $meter_id;
             $metric->value = $value;
             $metric->datetime = $datetime;
-            $metric->save();
-            $this->last_logged[$meter_id]['datetime'] = null;
-            $this->last_logged[$meter_id]['value'] = $value;
+            try
+            {
+                $metric->save();
+                $this->last_logged[$meter_id]['datetime'] = null;
+                $this->last_logged[$meter_id]['value'] = $value;
+            } catch (\Exception $ex)
+            {
+                /* Reset value to pick up next time */
+                $this->last_logged[$meter_id]['datetime'] = null;
+                $this->last_logged[$meter_id]['value'] = -1;
+            }
         } else
         {
             $this->last_logged[$meter_id]['datetime'] = $datetime;
