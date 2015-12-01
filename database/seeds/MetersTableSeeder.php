@@ -1,34 +1,10 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use App\Http\Controllers\LogfilesController;
 
 class MetersTableSeeder extends Seeder
 {
-    public static $OT_IDS = [
-        //0 => "flame_status",
-        1 => "control_setpoint",
-        9 => "remote_override_setpoint",
-        16 => "room_setpoint",
-        24 => "room_temperature",
-        25 => "boiler_water_temperature",
-        26 => "dhw_temperature",
-        28 => "return_water_temperature",
-        116 => "burner_starts",
-        117 => "ch_pump_starts",
-        119 => "dhw_burner_starts",
-        120 => "burner_operation_hours",
-        121 => "ch_pump_operation_hours",
-        123 => "dhw_burner_operation_hours",
-
-        256 => 'fault_indicator',
-        257 => 'ch_active',
-        258 => 'dhw_active',
-        259 => 'flame_status',
-        260 => 'cooling_active',
-        261 => 'ch2_active',
-        262 => 'diagnostic_indicator',
-        263 => 'electricity_production',
-    ];
 
     /**
      * Run the database seeds.
@@ -37,10 +13,15 @@ class MetersTableSeeder extends Seeder
      */
     public function run()
     {
-        foreach (MetersTableSeeder::$OT_IDS as $ot_id => $ot_label) {
+        foreach (LogfilesController::$OT_IDS as $ot_id => $ot_object)
+        {
+            if ($ot_object['seed'] !== true)
+            {
+                continue;
+            }
             DB::table('meters')->insert([
                 'id' => $ot_id,
-                'name' => $ot_label,
+                'name' => $ot_object['label'],
             ]);
         }
     }

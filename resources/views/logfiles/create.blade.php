@@ -8,7 +8,7 @@
         <hr/>
         {!! Form::open(['route' => 'logfiles', 'files' => true]) !!}
         <div class="form-group">
-            {!! Form::label('log_file', 'OpenTherm log file: *') !!}
+            {!! Form::label('log_file', 'OpenTherm log file (otlog-YYYYMMDD.txt): *') !!}
             {!! Form::file('log_file', null, ['class' => 'form-control']) !!}
         </div>
         <div class="form-group">

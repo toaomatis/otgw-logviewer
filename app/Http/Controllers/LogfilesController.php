@@ -5,11 +5,139 @@ namespace App\Http\Controllers;
 use App\Http\Requests;
 use App\Metric;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class LogfilesController extends Controller
 {
+    public static $OT_IDS = [
+        0 => [
+            'label' => 'flame_status',
+            'seed' => false,
+            'type' => 'flag8'
+        ],
+        1 => [
+            'label' => 'control_setpoint',
+            'seed' => true,
+            'type' => 'f8.8'
+        ],
+        9 => [
+            'label' => 'remote_override_setpoint',
+            'seed' => true,
+            'type' => 'f8.8'
+        ],
+        16 => [
+            'label' => 'room_setpoint',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        24 => [
+            'label' => 'room_temperature',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        25 => [
+            'label' => 'boiler_water_temperature',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        26 => [
+            'label' => 'dhw_temperature',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        28 => [
+            'label' => 'return_water_temperature',
+            'seed' => true,
+            'type' => 'f8.8',
+        ],
+        116 => [
+            'label' => 'burner_starts',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        117 => [
+            'label' => 'ch_pump_starts',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        119 => [
+            'label' => 'dhw_burner_starts',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        120 => [
+            'label' => 'burner_operation_hours',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        121 => [
+            'label' => 'ch_pump_operation_hours',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        123 => [
+            'label' => 'dhw_burner_operation_hours',
+            'seed' => true,
+            'type' => 'u16',
+        ],
+        256 => [
+            'label' => 'fault_indicator',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        257 => [
+            'label' => 'ch_active',
+            'seed' => true,
+            'type' => '1b'
+        ],
+        258 => [
+            'label' => 'dhw_active',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        259 => [
+            'label' => 'flame_status',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        260 => [
+            'label' => 'cooling_active',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        261 => [
+            'label' => 'ch2_active',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        262 => [
+            'label' => 'diagnostic_indicator',
+            'seed' => true,
+            'type' => '1b',
+        ],
+        263 => [
+            'label' => 'electricity_production',
+            'seed' => true,
+            'type' => '1b',
+        ],
+    ];
+
+    public static $OT_FLAME_IDS = [
+        0 => 256,
+        1 => 257,
+        2 => 258,
+        3 => 259,
+        4 => 260,
+        5 => 261,
+        6 => 262,
+        7 => 263,
+    ];
+
+    /* Prepare lines data array */
+    private $last_logged = array();
+
     /**
      * Display a listing of the resource.
      *
@@ -39,16 +167,15 @@ class LogfilesController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(),
-                [
-                        'log_file' => 'required',
-                        'log_date' => 'required|date_format:Y-m-d'
-                ]
+            [
+                'log_file' => 'required',
+                'log_date' => 'required|date_format:Ymd'
+            ]
         );
         if ($validator->fails() === true)
         {
             return redirect()->route('logfiles.create')->withErrors($validator)->withInput();
         }
-        $log_date = Carbon::createFromFormat('Y-m-d', $request->input('log_date'))->startOfDay();
         $log_date_str = $request->input('log_date');
         $log_file = $request->file('log_file');
 
@@ -57,11 +184,13 @@ class LogfilesController extends Controller
         {
             abort(404);
         }
-        $linecount = 0;
         $handle = fopen($path, "r");
 
-        /* Prepare lines data array */
-        $lines = array();
+        foreach (LogfilesController::$OT_IDS as $meter_id => $meter)
+        {
+            $this->last_logged[$meter_id]['value'] = -1;
+            $this->last_logged[$meter_id]['datetime'] = null;
+        }
         while (!feof($handle))
         {
             $line = fgets($handle);
@@ -75,7 +204,7 @@ class LogfilesController extends Controller
                 continue;
             }
             list($timestring, $command, $suffix) = $fields;
-            $log_time = Carbon::createFromFormat('Y-m-d H:i:s.u', $log_date_str . ' ' . $timestring);
+            $log_time = Carbon::createFromFormat('Ymd H:i:s.u', $log_date_str . ' ' . $timestring);
             $ot_target = substr($command, 0, 1);
             $ot_type = substr($command, 1, 1);
             $ot_id = intval(substr($command, 3, 2), 16);
@@ -84,49 +213,33 @@ class LogfilesController extends Controller
             {
                 if (($ot_type === '1') || ($ot_type === '4') || ($ot_type === 'C') || ($ot_type === '9'))
                 {
-                    if (array_key_exists($ot_id, BackendController::$OT_IDS) === true)
+                    if (array_key_exists($ot_id, LogfilesController::$OT_IDS) === true)
                     {
-                        $topic = BackendController::$OT_IDS[$ot_id];
-                        switch (BackendController::$OT_IDS_TYPE[$ot_id])
+                        $type = LogfilesController::$OT_IDS[$ot_id]['type'];
+                        switch ($type)
                         {
                             case 'flag8':
                             {
                                 if ($ot_id === 0)
                                 {
-                                    if($ot_payload !== 0)
+                                    foreach (LogfilesController::$OT_FLAME_IDS as $flame_id => $meter_id)
                                     {
-                                        $message = sprintf('%016b', $ot_payload);
-                                    }
-                                    foreach (BackendController::$OT_FLAME_IDS as $flame_id => $flame_label)
-                                    {
-                                        $value = (int)($ot_payload & (1 >> $flame_id));
-                                        $metric = new Metric();
-                                        $metric->meter_id = 256 + $flame_id;
-                                        $metric->datetime = $log_time;
-                                        $metric->value = (float)$value;
-                                        //$metric->save();
+                                        $value = (int)(($ot_payload >> $flame_id) & 1);
+                                        $this->saveMetric($meter_id, $value, $log_time);
                                     }
                                 }
                             }
                                 break;
                             case 'f8.8':
                             {
-                                $message = (float)$ot_payload / 256.0;
-                                $metric = new Metric();
-                                $metric->meter_id = $ot_id;
-                                $metric->datetime = $log_time;
-                                $metric->value = (float)$message;
-                                //$metric->save();
+                                $value = (float)$ot_payload / 256.0;
+                                $this->saveMetric($ot_id, $value, $log_time);
                             }
                                 break;
                             case 'u16':
                             {
-                                $message = $ot_payload;
-                                $metric = new Metric();
-                                $metric->meter_id = $ot_id;
-                                $metric->datetime = $log_time;
-                                $metric->value = (float)$message;
-                                //$metric->save();
+                                $value = $ot_payload;
+                                $this->saveMetric($ot_id, $value, $log_time);
                             }
                                 break;
                             default:
@@ -138,10 +251,9 @@ class LogfilesController extends Controller
                     }
                 }
             }
-            $linecount++;
         }
         fclose($handle);
-        redirect()->route('logfiles');
+        return redirect()->route('logfiles.create');
     }
 
     /**
@@ -187,5 +299,30 @@ class LogfilesController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    private function saveMetric($meter_id, $value, $datetime)
+    {
+        if ($this->last_logged[$meter_id]['value'] !== $value)
+        {
+            if ($this->last_logged[$meter_id]['datetime'] !== null)
+            {
+                $metric_last = new Metric();
+                $metric_last->meter_id = $meter_id;
+                $metric_last->value = $this->last_logged[$meter_id]['value'];
+                $metric_last->datetime = $this->last_logged[$meter_id]['datetime'];
+                $metric_last->save();
+            }
+            $metric = new Metric();
+            $metric->meter_id = $meter_id;
+            $metric->value = $value;
+            $metric->datetime = $datetime;
+            $metric->save();
+            $this->last_logged[$meter_id]['datetime'] = null;
+            $this->last_logged[$meter_id]['value'] = $value;
+        } else
+        {
+            $this->last_logged[$meter_id]['datetime'] = $datetime;
+        }
     }
 }
